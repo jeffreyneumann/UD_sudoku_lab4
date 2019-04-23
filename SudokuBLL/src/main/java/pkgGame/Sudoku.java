@@ -1,9 +1,16 @@
 package pkgGame;
 
 import java.security.SecureRandom;
+
+import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import pkgHelper.LatinSquare;
+
+import java.util.Collections;
 
 /**
  * Sudoku - This class extends LatinSquare, adding methods, constructor to
@@ -47,7 +54,16 @@ public class Sudoku extends LatinSquare {
 	 *            length of the width/height of the puzzle
 	 * @throws Exception
 	 *             if the iSize given doesn't have a whole number square root
+	 *             
+	 *             
+	 * 
 	 */
+	
+	
+	private HashMap<Integer, Cell> hashmap;
+	
+	private HashMap<Integer, Cell> cells;
+	
 	public Sudoku(int iSize) throws Exception {
 
 		this.iSize = iSize;
@@ -62,6 +78,11 @@ public class Sudoku extends LatinSquare {
 		int[][] puzzle = new int[iSize][iSize];
 		super.setLatinSquare(puzzle);
 		FillDiagonalRegions();
+		
+		setCells();
+		
+		fillRemaining(this.cells.get(Objects.hash(0,0)));
+		
 	}
 
 	/**
@@ -77,16 +98,68 @@ public class Sudoku extends LatinSquare {
 	 *             number square root
 	 */
 	public Sudoku(int[][] puzzle) throws Exception {
+		
 		super(puzzle);
 		this.iSize = puzzle.length;
 		double SQRT = Math.sqrt(iSize);
+		
 		if ((SQRT == Math.floor(SQRT)) && !Double.isInfinite(SQRT)) {
 			this.iSqrtSize = (int) SQRT;
 		} else {
 			throw new Exception("Invalid size");
 		}
-
+		
 	}
+
+	
+	public HashSet<Integer> getAllValidCellValues(int iCol, int iRow) {
+		HashSet<Integer> myHashSet = new HashSet<Integer>();
+		for (int i=0; i<iSize; i++) {
+			if (isValidValue(iRow,iCol,i)) {
+				myHashSet.add(i);
+			}
+		}
+		
+		return myHashSet;
+	}
+	
+	/*
+	private HashSet<Integer> getAllValidCellValues(int iCol, int iRow){
+		
+		HashSet<Integer> validValues=new HashSet<Integer>();
+		int[] colVals=getColumn(iCol);
+		int[] rowVals=getRow(iRow);
+		int[] regVals=getRegion(iCol, iRow);
+		
+		//check if there is a value in the cell
+		//this is the case for the cells in the diagonal regions
+		//these values won't be changed in fillRemaining
+		int check=this.getRow(iRow)[iCol];
+		if (check!=0) {
+			validValues.add(check);
+			
+			return validValues;
+		}
+		
+		
+		for (int val=1; val<=this.iSize; val++) {
+			validValues.add(val);
+		}
+		for (int val : colVals) {
+			validValues.remove(val);
+		}
+		for (int val : rowVals) {
+			validValues.remove(val);
+		}
+		for (int val : regVals) {
+			validValues.remove(val);
+		}
+		
+		return validValues;
+		
+	}
+	*/
+
 
 	/**
 	 * getPuzzle - return the Sudoku puzzle
@@ -293,6 +366,7 @@ public class Sudoku extends LatinSquare {
 	 * @since Lab #3
 	 */
 	public void PrintPuzzle() {
+		System.out.println("checkpoint3");
 		for (int i = 0; i < this.getPuzzle().length; i++) {
 			System.out.println("");
 			for (int j = 0; j < this.getPuzzle().length; j++) {
@@ -410,4 +484,132 @@ public class Sudoku extends LatinSquare {
 			ar[i] = a;
 		}
 	}
+	
+	private void setCells() {
+		for (int iRow = 0; iRow < iSize; iRow++) {
+			for (int iCol = 0; iCol < iSize; iCol++) {
+				Cell c = new Cell(iRow, iCol);
+				
+				c.setLstValidValues(getAllValidCellValues(iCol, iRow));
+				c.ShuffleValidValues();
+				
+				cells.put(c.hashCode(),c);
+				
+			}
+		}
+	}
+
+	
+	
+	
+	
+	
+	
+	private class Cell{
+		
+		private int iRow;
+		private int iCol;
+		private ArrayList<Integer> lstValidValues = new ArrayList<Integer>();
+		
+		public Cell(int iRow, int iCol) {
+			super();
+			this.iRow = iRow;
+			this.iCol = iCol;
+		}
+			
+		public ArrayList<Integer> getLstValidValues() {
+			return lstValidValues;
+		}
+
+		public void setLstValidValues(HashSet<Integer> hsValidValues) {
+			lstValidValues = new ArrayList<Integer>(hsValidValues);
+		}
+
+		public int getiRow() {
+			return iRow;
+		}
+
+		public int getiCol() {
+			return iCol;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (o == this) 
+				return true;
+			
+			if (!(o instanceof Cell)) {
+				return false;
+			}
+			
+			Cell c = (Cell) o;
+			return iCol == c.iCol && iRow == c.iRow;
+		}
+
+		public int hashCode() {
+			return Objects.hash(iRow, iCol);
+		}
+
+		public Cell GetNextCell (Cell c) {
+				
+				int iCol = c.getiCol() + 1;
+				int iRow = c.getiRow();
+				
+				if (iCol >= iSize && iRow < iSize -1) {
+					iRow = iRow + 1;
+					iCol = 0;
+				}
+				
+				if (iRow >= iSize && iCol >=iSize) {
+					return null;
+				}
+				
+				if (iRow < iSqrtSize) {
+					if (iCol < iSqrtSize) {
+						iCol = iSqrtSize;
+					} else if (iRow < iSize - iSqrtSize) {
+						if (iCol == (int) (iRow / iSqrtSize) * iSqrtSize) {
+							iCol = iCol + iSqrtSize;
+						}
+					} else {
+						if (iCol == iSize - iSqrtSize) {
+							iRow = iRow +1;
+							iCol = 0;
+							if (iRow >= iSize) {
+								return null;
+							}
+						}
+					}
+				}
+				System.out.println("whatsWrong");
+				return (Cell)cells.get(Objects.hash(iRow,iCol));
+			}
+				
+		
+
+		
+		public void ShuffleValidValues() {
+			Collections.shuffle(this.lstValidValues);
+		}	
+	}
+	private boolean fillRemaining(Sudoku.Cell myCell) {
+
+		if (myCell == null)
+			return false;
+		System.out.println("checkpoint2");
+		for (int iValue : myCell.getLstValidValues()) {							
+			if (isValidValue(myCell.iCol, myCell.iRow, iValue)) {									
+				this.getPuzzle()[myCell.getiRow()][myCell.getiCol()] = iValue;	
+
+				if (fillRemaining(myCell.GetNextCell(myCell)))				
+					return true;
+				
+				this.getPuzzle()[myCell.getiRow()][myCell.getiCol()] = 0;}
+		}
+		return false;
+	}
 }
+
+		
+
+

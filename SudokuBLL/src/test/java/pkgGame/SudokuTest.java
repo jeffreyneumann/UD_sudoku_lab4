@@ -124,6 +124,29 @@ public class SudokuTest {
 	}
 
 
+	
+	
+	@Test
+	public void Sudoku_FullPuzzle_1() throws Exception {
+		/*
+		 * This is failing for unknown reasons.
+		 * We suspect that the failure is due the a unforeseen null case in the getNextCell method.
+		 * We even tried looking at the course capture from the previous lecture but the presented
+		 * solutions were not working
+		 */
+		
+		Sudoku puzzle = new Sudoku(9);
+		
+		PrintStars();
+		
+		puzzle.PrintPuzzle();
+		PrintStars();
+		assertTrue(puzzle.isSudoku());
+		
+	}
+	
+
+
 
 
 
